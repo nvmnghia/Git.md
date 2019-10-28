@@ -7,7 +7,7 @@
 ### Distributed VCS
 
 |       | Git             | SVN                    |
-|:------|:----------------|:-----------------------|
+| :---- | :-------------- | :--------------------- |
 | Model | **Distributed** | **Centralized**        |
 | Repo  | Remote & Local  | Central & Working copy |
 
@@ -17,16 +17,17 @@ Git advantage:
 - Do everything offline
 - No single point of failure
 
-### Architecture
+### Component
 
 1. Repository
     - = project
-    - 2 components:
+    - 2 visible parts:
         - Working tree: Current state
         - `.git` folder: History in blobs
     - Remote & local:
         - Remote: hosted elsewhere
             - Enable collaboration
+            - Backup
         - Local: right here
         - `origin`? Just default remote name
     - `git remote rm/add/...`
@@ -47,6 +48,7 @@ Git advantage:
     - Current snapshot
         - Analogy: game checkpoint
     - ID: SHA-1
+        - Hash tree structure, not content
     - Internal:
         - Save in blobs
         - Another aspect of git: **key-value DB**!
@@ -92,7 +94,7 @@ Git advantage:
     - Compare to branch
 
     |        | Fork        | Branch      |
-    |:-------|:------------|:------------|
+    | :----- | :---------- | :---------- |
     | Intent | New product | New feature |
     | Output | Repo        | Branch      |
     | Merge  | Won't       | Will        |
@@ -170,13 +172,14 @@ Git advantage:
             - `^` == `^1`
             - `^3`: third parent
             - Equal `~` if **no** merge commit along the path
-            - Cause: DAG != tree
+        - Why 2 methods?
+            - DAG != tree
 
         ```mermaid
         graph BT
             classDef master fill:#418a44;
 
-            subgraph ref from HEAD
+            subgraph ref_each_node_from_HEAD
                 C1((C1));
                 C2((C2)) -- "HEAD~4" --> C1;
                 C3((C3)) -- "HEAD~^2~~" --> C1;
@@ -207,8 +210,7 @@ Git advantage:
         - Famous one-liner:
 
             ```bash
-            git log --graph --decorate --pretty=oneline --abbrev-commit
-
+            $ git log --graph --decorate --pretty=oneline --abbrev-commit
             * ddbd10c001 (HEAD, tag: 4.1.1, m, b) release: OpenCV 4.1.1
             *   7c0a43d425 Merge tag '4.1.1-openvino'
             |\  
@@ -222,7 +224,7 @@ Git advantage:
     1. `git checkout`
         - Checkout sth: move **working tree** to it
             - `git checkout fix`
-            - `git checkout DEADB33`
+            - `git checkout DEADBEEF`
         - Etym: from convention
             - `check in`: store into VCS
             - `check out`: get from VCS
@@ -238,7 +240,7 @@ Git advantage:
             graph BT
                 classDef dashed stroke-dasharray: 5, 5;
 
-                subgraph checkout branch
+                subgraph checkout_branch
                     C1a((C1));
                     C2a((C2)) --> C1a;
                     C3a((C3)) --> C2a;
@@ -256,7 +258,7 @@ Git advantage:
                     bc(branch) --> C2c;
                 end
 
-                subgraph move up
+                subgraph move_up
                     C1m((C1));
                     C2m(("->C2<-")) --> C1m;
                     bm(branch) --> C2m;
@@ -281,11 +283,11 @@ Git advantage:
         - Commit to reset to: default `HEAD`
         - 3 reset modes
 
-            |             | `--soft` | `--mixed` (default)  | `--hard`      |
-            |:------------|:---------|:---------------------|:--------------|
-            | Working dir | Keep change  | Same as left     | Delete change |
-            | Stage area  | Stage change | Not stage change | Same as left  |
-            | Commit tree | Remove to commit | Same as left | Same as left  |
+            |             | `--soft`         | `--mixed` (default) | `--hard`      |
+            | :---------- | :--------------- | :------------------ | :------------ |
+            | Working dir | Keep change      | Same as left        | Delete change |
+            | Stage area  | Stage change     | Not stage change    | Same as left  |
+            | Commit tree | Remove to commit | Same as left        | Same as left  |
 
             ![Modes of git reset](https://wac-cdn.atlassian.com/dam/jcr:7fb4b5f7-a2cd-4cb7-9a32-456202499922/03%20(8).svg?cdnVersion=649)
 
@@ -348,7 +350,9 @@ Git advantage:
         ```
 
     2. Rebase
-        Copy the history from the branch point to another point
+        - Copy the history from the branch point to another point
+        - Note: The Golden Rule of Rebasing
+          - Do **NOT** rebase on **PUBLIC** branch
 
         ```bash
         # Rebase fix on top of master
@@ -395,11 +399,14 @@ Git advantage:
         ```
 
     3. Merge vs Rebase
-        Merge: preserve history. Rebase: create new commits (replay).
-        Conflict is inevitable. Resolving is down to us.
+        - Difference:
+            - Merge: preserve history
+            - Rebase: rewrite history (replay)
+        - Conflict is inevitable. Resolving is down to us.
 
-2. Move commit around
+2. Move commit around & Rewrite history
     1. Cherry-pick
+
         Manually copy commits then add it over `HEAD`
 
         ```bash
@@ -407,16 +414,75 @@ Git advantage:
         ```
 
     2. Interactive rebase
+        - Cherry-pick disadvantage: need to know commit
+        - `rebase -i` comes to the rescue!
+        - Interactive rebase can do:
+            - Reorder commits
+            - Pick neccessary commits
+            - Squash commits
+            - Split commits
+        - The Golden Rule of Rebasing still applies:
+            - NO rebase on PUBLIC
+            - Use rebase to cleanup before push
+        - Why no interactive merge?
+            - Merge doesn't meant to *rewrite history* like rebase
+
+        ```bash
+        git rebase -i HEAD~10
+        ```
+
+    3. Change latest commit
+        - `git reset HEAD~1`
+        - `git commit -m amend`: Remove latest commit, stage all change, ready to commit
+
+## Git remote
+
+### Common flow
+
+```bash
+# Get remote repo to local 1st time
+git clone repo
+
+# Get remote changes to working directory
+git pull remote branch
+# ... is equivalent to
+git fetch remote branch    # Get remote changes
+git merge remote/branch    # Apply those changes
+
+# Push changes to remote
+git push remote branch
+```
+
+### Refspec & Tracking
+
+1. `origin/master` vs `origin master`???
+    - `origin/master`: refspec = branch
+        - A local copy of `master` on `origin`
+    - Why no `git pull origin/master`, or `git pull origin origin/master`?
+        - The distinction is valid on local only
+
+2. `origin/master` and `master`???
+    - `master` **tracks** `origin/master`
+        - Pull: changes are automatically merged to `master`
+        - Push: changes are automatically merged to `origin/master`
+    - Manually specify tracking:
+
+        ```bash
+        git checkout -b notMaster origin/master
+        ```
 
 ## Git Internal
 
 1. How git stores data (or what a commit actually is)
-    - Git stores snapshot, not diff
-        - The main difference between Git & other VCS
+    - Git stores, and each commit is, snapshot
+        - Not diff -> main difference between Git vs others
         - Hidden cause: distributed vs centralized
     - Snapshot is large, how to minimize?
         - Refer to unchanged file in previous snapshots
         - Data-level diff
         - Compress
 
-2. Hashed tree? Sound familiar...
+2. Hashed tree? Distributed? Sound familiar...
+    Is git a blockchain???? No!
+    - Git allow history rewrite
+    - Git doesn't enforce verification (proof of work)
