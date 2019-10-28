@@ -415,7 +415,7 @@ Git advantage:
         - The main difference between Git & other VCS
         - Hidden cause: distributed vs centralized
     - Snapshot is large, how to minimize?
-        - Refer to unchanged file
+        - Refer to unchanged file in previous snapshots
         - Data-level diff
         - Compress
 
