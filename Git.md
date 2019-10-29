@@ -117,7 +117,7 @@ Git advantage:
 
     2. Branch
         - Remind: branch = commit pointer
-            - Default: points at the **top**
+            - Default: points **top** of branch
         - `git branch`
             - `new_name`: new branch
             - `-m new_name`: rename current
@@ -128,22 +128,7 @@ Git advantage:
         - Branch can points at non-top commit
             - See `git checkout`
 
-    3. `HEAD` & special pointers
-        - `HEAD`: points *current checked-out*
-            - Usually is a branch
-            - Can also be a commit -> detached `HEAD`
-        - More on `checkout` later
-        - Etym: top of the branch
-        - One of special pointers
-            - git handles what is pointed
-            - E.g.: `REVERT_HEAD`, `CHERRY_PICK_HEAD`,...
-
-        ```bash
-        # Move HEAD to sth
-        git checkout sth
-        ```
-
-    4. Tag
+    3. Tag
         - Still pointers!
         - Difference:
             - Branch/`HEAD`: move with commits
@@ -155,23 +140,49 @@ Git advantage:
         git tag tag_name
         # annotated - have message
         git tag tag_name -m "tag message"
+
+        # Move to a tag
+        git checkout tags/tag_name
+        ```
+
+    4. `HEAD` & special pointers
+        - `HEAD`: points *current checked-out*
+            - Usually is a branch
+            - Can also be a commit -> detached `HEAD`
+        - HEAD is closely related to `checkout`
+            - More on `checkout` later
+        - Etym: top of the branch
+        - `HEAD` is one special pointer
+            - Git manages these
+        - Other special pointers:
+            - `REVERT_HEAD`
+            - `CHERRY_PICK_HEAD`
+            - ...
+
+        ```bash
+        # Move HEAD to sth
+        git checkout sth
         ```
 
     5. Relative ref
         - Raw pointers are dirty -> Meet relative ref
+            - NO one remebers commit id
+            - *Even* Thanh
         - `~` & `^`: back reference suffix
         - Similarity:
             - Go with number: `master~5`
             - Chainable: `HEAD^~^`
-        - `~n`: Go up nth generation, at the first parent
+        - `~n`: Go up n<sup>th</sup> generation, at the first parent
             - For dummies: Go up **ancestor**
             - `~` == `~1`
             - `~2`: first parent's first parent
-        - `^n`: Go up to the nth parent (if > 1 parents)
+        - `^n`: Go up to the n<sup>th</sup> parent (if > 1 parents)
             - For dummies: Go up **parent**
             - `^` == `^1`
-            - `^3`: third parent
-            - Equal `~` if **no** merge commit along the path
+            - `^2`: depends:
+                - Merge commit: second parent
+                - Otherwise: like `~2`
+            - Equal `~` if **not** merge commit
         - Why 2 methods?
             - DAG != tree
 
@@ -179,19 +190,17 @@ Git advantage:
         graph BT
             classDef master fill:#418a44;
 
-            subgraph ref_each_node_from_HEAD
-                C1((C1));
-                C2((C2)) -- "HEAD~4" --> C1;
-                C3((C3)) -- "HEAD~^2~~" --> C1;
-                C4((C4)) -- "HEAD~^2~" --> C3;
-                C5((C5)) -- "HEAD~^" --> C2;
-                C6((C6)) -- "HEAD~^2" --> C4;
-                C6 -- "HEAD~~" --> C5;
-                C7((C7)) -- "HEAD~1" --> C6;
-                m("->master<-") --> C7;
+            C1((C1));
+            C2((C2)) -- "HEAD~4" --> C1;
+            C3((C3)) -- "HEAD~^2~~" --> C1;
+            C4((C4)) -- "HEAD~^2~" --> C3;
+            C5((C5)) -- "HEAD~^" --> C2;
+            C6((C6)) -- "HEAD~^2" --> C4;
+            C6 -- "HEAD~~" --> C5;
+            C7((C7)) -- "HEAD~1" --> C6;
+            m("->master<-") --> C7;
 
-                class m master;
-            end
+            class m master;
         ```
 
     6. Refspec
