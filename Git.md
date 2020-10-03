@@ -1,6 +1,6 @@
 # Popular science: Git
 
-![Git intro](https://imgs.xkcd.com/comics/git.png)
+![Git intro](pics/git.png)
 
 ## Concept
 
@@ -298,7 +298,7 @@ Git advantage:
             | Stage area  | Stage change     | Not stage change    | Same as left  |
             | Commit tree | Remove to commit | Same as left        | Same as left  |
 
-            ![Modes of git reset](https://wac-cdn.atlassian.com/dam/jcr:7fb4b5f7-a2cd-4cb7-9a32-456202499922/03%20(8).svg?cdnVersion=649)
+            ![Modes of git reset](pics/git_reset_modes.svg)
 
     4. `git reset` vs `git checkout`
         Key takeaway:
@@ -311,7 +311,7 @@ Git advantage:
 - Q: Branched. Wat do?
 - A: Merge!
 
-![Thanh's first merge](https://i.imgur.com/gsDdNVy.jpg)
+![Thanh's first merge](pics/thanh_1st_merge.jpg)
 
 1. Basic merging: 2 methods
 
