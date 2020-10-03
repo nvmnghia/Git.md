@@ -2,9 +2,36 @@
 
 ![Git intro](pics/git.png)
 
-## Concept
+---
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=3 orderedList=false} -->
 
-### Distributed VCS
+<!-- code_chunk_output -->
+
+- [Popular science: Git](#popular-science-git)
+  - [1. Concept](#1-concept)
+    - [1. Distributed VCS](#1-distributed-vcs)
+    - [2. Component](#2-component)
+  - [2. Git navigation](#2-git-navigation)
+    - [1. Refer to a commit](#1-refer-to-a-commit)
+    - [2. Navigation utilities](#2-navigation-utilities)
+    - [3. Move to a commit](#3-move-to-a-commit)
+  - [3. Git merge](#3-git-merge)
+    - [1. Basic merging: 2 methods](#1-basic-merging-2-methods)
+    - [2. Move commit around & Rewrite history](#2-move-commit-around-rewrite-history)
+  - [4. Git remote](#4-git-remote)
+    - [1. Common flow](#1-common-flow)
+    - [2. Refspec & Tracking](#2-refspec-tracking)
+  - [5. Git Internal](#5-git-internal)
+    - [1. How git stores data (or what a commit actually is)](#1-how-git-stores-data-or-what-a-commit-actually-is)
+    - [2. Hashed tree? Distributed? Sound familiar...](#2-hashed-tree-distributed-sound-familiar)
+
+<!-- /code_chunk_output -->
+
+---
+
+## 1. Concept
+
+### 1. Distributed VCS
 
 |       | Git             | SVN                    |
 | :---- | :-------------- | :--------------------- |
@@ -17,436 +44,466 @@ Git advantage:
 - Do everything offline
 - No single point of failure
 
-### Component
+### 2. Component
 
-1. Repository
-    - = project
-    - 2 visible parts:
-        - Working tree: Current state
-        - `.git` folder: History in blobs
-    - Remote & local:
-        - Remote: hosted elsewhere
-            - Enable collaboration
-            - Backup
-        - Local: right here
-        - `origin`? Just default remote name
-    - `git remote rm/add/...`
+#### 1. Repository
 
-2. Staging area
-    - Separate working tree from repo
-        - Allow selective commit
-    - Example: Machine-specific config
-        - If `commit` saves everything: duplicated config
-        - Need selective commit => only commit **staged** changes
-        - Related: `.gitignore`
-    - **Common flow**:
-        1. `git add`: stage *needed* files
-        2. `git commit`
-        3. `git push`
+- = project
+- 2 visible parts:
+  - Working tree: Current state
+  - `.git` folder: History in blobs
+- Remote & local:
+  - Remote: hosted elsewhere
+    - Enable collaboration
+    - Backup
+  - Local: right here
+  - `origin`? Just default remote name
+- `git remote rm/add/...`
 
-3. Commit
-    - Current snapshot
-        - Analogy: game checkpoint
-    - ID: SHA-1
-        - Hash tree structure, not content
-    - Internal:
-        - Save in blobs
-        - Another aspect of git: **key-value DB**!
+#### 2. Staging area
 
-4. Branch
-    - Development path
-    - `master`? Just default branch name
-        - Also called *trunk*
-    - `git branch name`: create new branch
-        - Initially a clone of the current branch
-    - `git checkout name`: move to branch
+- Separate working tree from repo
+  - Allow selective commit
+- Example: Machine-specific config
+  - If `commit` saves everything: duplicated config
+  - Need selective commit => only commit **staged** changes
+  - Related: `.gitignore`
+- **Common flow**:
+  1. `git add`: stage *needed* files
+  2. `git commit`
+  3. `git push`
 
-5. Pointers
-    - **Branch points commit!**
-    - `HEAD` points branch/commit
-    - Pointers are powerful tool to navigate in git
-    - More on pointer later
+#### 3. Commit
 
-6. Commit tree
-    - Git is all about **commit**
-    - Commit = tree node
-    - *tree* fits the analogy
-        - DAG in fact
+- Current snapshot
+  - Analogy: game checkpoint
+- ID: SHA-1
+  - Hash tree structure, not content
+- Internal:
+  - Save in blobs
+  - Another aspect of git: **key-value DB**!
+
+#### 4. Branch
+
+- Development path
+- `master`? Just default branch name
+  - Also called *trunk*
+- `git branch name`: create new branch
+  - Initially a clone of the current branch
+- `git checkout name`: move to branch
+
+#### 5. Pointers
+
+- **Branch points commit!**
+- `HEAD` points branch/commit
+- Pointers are powerful tool to navigate in git
+- More on pointer later
+
+#### 6. Commit tree
+
+- Git is all about **commit**
+- Commit = tree node
+- *tree* fits the analogy
+  - DAG in fact
+
+```mermaid
+graph BT
+    classDef master fill:#418a44;
+    classDef fix fill:#484A4B;
+
+    C1((C1)) --> C0((C0));
+    C2((C2)) --> C1;
+    C3((C3)) --> C1;
+
+    mb("->master<-") --> C2;
+    fb(fix) --> C3;
+
+    class mb master
+    class fb fix
+```
+
+#### 7. Fork
+
+- Also development path lmao
+- Compare to branch
+
+|        | Fork        | Branch      |
+| :----- | :---------- | :---------- |
+| Intent | New product | New feature |
+| Output | Repo        | Branch      |
+| Merge  | Won't       | Will        |
+| Tool   | git server  | git         |
+
+## 2. Git navigation
+
+### 1. Refer to a commit
+
+5 interchangeable methods:
+
+#### 1. Raw ID
+
+- Remind: commit has unique ID
+
+```bash
+# Get info, content, diff,...
+git show commit_pointer
+# Get ID
+git rev-parse commit_pointer
+```
+
+#### 2. Branch
+
+- Remind: branch = commit pointer
+  - Default: points **top** of branch
+- `git branch`
+  - `new_name`: new branch
+  - `-m new_name`: rename current
+  - `-l`: list
+  - `-a`: list remote branch
+  - `-d`: delete *merged* branch
+  - `-D`: delete any branch
+- Branch can points at non-top commit
+  - See `git checkout`
+
+#### 3. Tag
+
+- Still pointers!
+- Difference:
+  - Branch/`HEAD`: move with commits
+  - Tags: fixed point
+- Usually used to mark version
+
+```bash
+# lightweight - no message
+git tag tag_name
+# annotated - have message
+git tag tag_name -m "tag message"
+
+# Move to a tag
+git checkout tags/tag_name
+```
+
+#### 4. `HEAD` & special pointers
+
+- `HEAD`: points *current checked-out*
+  - Usually is a branch
+  - Can also be a commit -> detached `HEAD`
+- HEAD is closely related to `checkout`
+  - More on `checkout` later
+- Etym: top of the branch
+- `HEAD` is one special pointer
+  - Git manages these
+- Other special pointers:
+  - `REVERT_HEAD`
+  - `CHERRY_PICK_HEAD`
+  - ...
+
+```bash
+# Move HEAD to sth
+git checkout sth
+```
+
+#### 5. Relative ref
+
+- Raw pointers are dirty -> Meet relative ref
+  - NO one remembers commit id
+  - *Even* Thanh
+- `~` & `^`: back reference suffix
+- Similarity:
+  - Go with number: `master~5`
+  - Chainable: `HEAD^~^`
+- `~n`: Go up n<sup>th</sup> generation, at the first parent
+  - For dummies: Go up **ancestor**
+  - `~` == `~1`
+  - `~2`: first parent's first parent
+- `^n`: Go up to the n<sup>th</sup> parent (if > 1 parents)
+  - For dummies: Go up **parent**
+  - `^` == `^1`
+  - `^2`: depends:
+    - Merge commit: second parent
+    - Otherwise: like `~2`
+  - Equal `~` if **not** merge commit
+- Why 2 methods?
+  - DAG != tree
+
+```mermaid
+graph BT
+    classDef master fill:#418a44;
+
+    C1((C1));
+    C2((C2)) -- "HEAD~4" --> C1;
+    C3((C3)) -- "HEAD~^2~~" --> C1;
+    C4((C4)) -- "HEAD~^2~" --> C3;
+    C5((C5)) -- "HEAD~^" --> C2;
+    C6((C6)) -- "HEAD~^2" --> C4;
+    C6 -- "HEAD~~" --> C5;
+    C7((C7)) -- "HEAD~1" --> C6;
+    m("->master<-") --> C7;
+
+    class m master;
+```
+
+#### 6. Refspec
+
+- Example: `origin/master`
+- More on remote & refspec later
+
+### 2. Navigation utilities
+
+#### 1. `git status`
+
+- Show current `HEAD`, branch
+- Show staged file
+- Show file addition/deletion/modification
+- ...
+
+#### 2. `git log`
+
+- Has many format/beautify mode
+- Famous one-liner:
+
+    ```bash
+    $ git log --graph --decorate --pretty=oneline --abbrev-commit
+    * ddbd10c001 (HEAD, tag: 4.1.1, m, b) release: OpenCV 4.1.1
+    *   7c0a43d425 Merge tag '4.1.1-openvino'
+    |\
+    | * 693877212d (tag: 4.1.1-openvino) Fixed video writer filename check for plugins
+    | * db211446f3 OpenCV version '-openvino'
+    * |   0cf479dd5c Merge remote-tracking branch 'upstream/3.4' into merge-3.4
+    |\ \
+    ```
+
+### 3. Move to a commit
+
+#### 1. `git checkout`
+
+- Checkout sth: move **working tree** to it
+  - `git checkout fix`
+  - `git checkout DEADBEEF`
+- Etym: from convention
+  - `check in`: store into VCS
+  - `check out`: get from VCS
+- Checkout is associated with `HEAD`
+- Checkout branch: safe
+- Checkout non-branch - detached `HEAD`!
+  - NOT safe to commit, OK if not
+  - Check out top commit,... also detach `HEAD`
+- Why unsafe to commit?
+  - Who can see the commit then?
 
     ```mermaid
     graph BT
-        classDef master fill:#418a44;
-        classDef fix fill:#484A4B;
+        classDef dashed stroke-dasharray: 5, 5;
 
-        C1((C1)) --> C0((C0));
-        C2((C2)) --> C1;
-        C3((C3)) --> C1;
+        subgraph checkout_branch
+            C1a((C1));
+            C2a((C2)) --> C1a;
+            C3a((C3)) --> C2a;
+            ba("->branch<-") --> C2a;
 
-        mb("->master<-") --> C2;
-        fb(fix) --> C3;
+            comment(C3 is unreachable!) -.-> C3a
 
-        class mb master
-        class fb fix
+            class comment dashed
+        end
+
+        subgraph commit
+            C1c((C1));
+            C2c((C2)) --> C1c;
+            C3c(("->C3<-")) --> C2c;
+            bc(branch) --> C2c;
+        end
+
+        subgraph move_up
+            C1m((C1));
+            C2m(("->C2<-")) --> C1m;
+            bm(branch) --> C2m;
+        end
+
+        subgraph initial
+            C1b((C1));
+            C2b((C2)) --> C1b;
+            bb("->branch<-") --> C2b;
+        end
     ```
 
-7. Fork
-    - Also development path lmao
-    - Compare to branch
+#### 2. `git revert`
 
-    |        | Fork        | Branch      |
-    | :----- | :---------- | :---------- |
-    | Intent | New product | New feature |
-    | Output | Repo        | Branch      |
-    | Merge  | Won't       | Will        |
-    | Tool   | git server  | git         |
+- Undo changes made by *one* commit
+- Create a new commit that undoes the commit's change
 
-## Git navigation
+#### 3. `git reset`
 
-1. Refer to a commit
-    5 interchangeable methods:
+- Reset working tree/stage/commit tree to earlier state
+  - May include delete!
+- Much more powerful & dangerous than `checkout`
+- `git reset reset_mode commit_reset_to`
+- Commit to reset to: default `HEAD`
+- 3 reset modes
 
-    1. Raw ID
-        - Remind: commit has unique ID
+    |             | `--soft`         | `--mixed` (default) | `--hard`      |
+    | :---------- | :--------------- | :------------------ | :------------ |
+    | Working dir | Keep change      | Same as left        | Delete change |
+    | Stage area  | Stage change     | Not stage change    | Same as left  |
+    | Commit tree | Remove to commit | Same as left        | Same as left  |
 
-        ```bash
-        # Get info, content, diff,...
-        git show commit_pointer
-        # Get ID
-        git rev-parse commit_pointer
-        ```
+    ![Modes of git reset](pics/git_reset_modes.svg)
 
-    2. Branch
-        - Remind: branch = commit pointer
-            - Default: points **top** of branch
-        - `git branch`
-            - `new_name`: new branch
-            - `-m new_name`: rename current
-            - `-l`: list
-            - `-a`: list remote branch
-            - `-d`: delete *merged* branch
-            - `-D`: delete any branch
-        - Branch can points at non-top commit
-            - See `git checkout`
+#### 4. `git reset` vs `git checkout`
 
-    3. Tag
-        - Still pointers!
-        - Difference:
-            - Branch/`HEAD`: move with commits
-            - Tags: fixed point
-        - Usually used to mark version
+Key takeaway:
 
-        ```bash
-        # lightweight - no message
-        git tag tag_name
-        # annotated - have message
-        git tag tag_name -m "tag message"
+- `git checkout`: Change **working tree**
+- `git revert`: Undo one commit
+- `git reset`: Reset **stage**
 
-        # Move to a tag
-        git checkout tags/tag_name
-        ```
-
-    4. `HEAD` & special pointers
-        - `HEAD`: points *current checked-out*
-            - Usually is a branch
-            - Can also be a commit -> detached `HEAD`
-        - HEAD is closely related to `checkout`
-            - More on `checkout` later
-        - Etym: top of the branch
-        - `HEAD` is one special pointer
-            - Git manages these
-        - Other special pointers:
-            - `REVERT_HEAD`
-            - `CHERRY_PICK_HEAD`
-            - ...
-
-        ```bash
-        # Move HEAD to sth
-        git checkout sth
-        ```
-
-    5. Relative ref
-        - Raw pointers are dirty -> Meet relative ref
-            - NO one remebers commit id
-            - *Even* Thanh
-        - `~` & `^`: back reference suffix
-        - Similarity:
-            - Go with number: `master~5`
-            - Chainable: `HEAD^~^`
-        - `~n`: Go up n<sup>th</sup> generation, at the first parent
-            - For dummies: Go up **ancestor**
-            - `~` == `~1`
-            - `~2`: first parent's first parent
-        - `^n`: Go up to the n<sup>th</sup> parent (if > 1 parents)
-            - For dummies: Go up **parent**
-            - `^` == `^1`
-            - `^2`: depends:
-                - Merge commit: second parent
-                - Otherwise: like `~2`
-            - Equal `~` if **not** merge commit
-        - Why 2 methods?
-            - DAG != tree
-
-        ```mermaid
-        graph BT
-            classDef master fill:#418a44;
-
-            C1((C1));
-            C2((C2)) -- "HEAD~4" --> C1;
-            C3((C3)) -- "HEAD~^2~~" --> C1;
-            C4((C4)) -- "HEAD~^2~" --> C3;
-            C5((C5)) -- "HEAD~^" --> C2;
-            C6((C6)) -- "HEAD~^2" --> C4;
-            C6 -- "HEAD~~" --> C5;
-            C7((C7)) -- "HEAD~1" --> C6;
-            m("->master<-") --> C7;
-
-            class m master;
-        ```
-
-    6. Refspec
-        - Example: `origin/master`
-        - More on remote & refspec later
-
-2. Navigation utilities
-    1. `git status`
-        - Show current `HEAD`, branch
-        - Show staged file
-        - Show file addition/deletion/modification
-        - ...
-
-    2. `git log`
-        - Has many format/beautify mode
-        - Famous one-liner:
-
-            ```bash
-            $ git log --graph --decorate --pretty=oneline --abbrev-commit
-            * ddbd10c001 (HEAD, tag: 4.1.1, m, b) release: OpenCV 4.1.1
-            *   7c0a43d425 Merge tag '4.1.1-openvino'
-            |\  
-            | * 693877212d (tag: 4.1.1-openvino) Fixed video writer filename check for plugins
-            | * db211446f3 OpenCV version '-openvino'
-            * |   0cf479dd5c Merge remote-tracking branch 'upstream/3.4' into merge-3.4
-            |\ \  
-            ```
-
-3. Move to a commit
-    1. `git checkout`
-        - Checkout sth: move **working tree** to it
-            - `git checkout fix`
-            - `git checkout DEADBEEF`
-        - Etym: from convention
-            - `check in`: store into VCS
-            - `check out`: get from VCS
-        - Checkout is associated with `HEAD`
-        - Checkout branch: safe
-        - Checkout non-branch - detached `HEAD`!
-            - NOT safe to commit, OK if not
-            - Check out top commit,... also detach `HEAD`
-        - Why unsafe to commit?
-            - Who can see the commit then?
-
-            ```mermaid
-            graph BT
-                classDef dashed stroke-dasharray: 5, 5;
-
-                subgraph checkout_branch
-                    C1a((C1));
-                    C2a((C2)) --> C1a;
-                    C3a((C3)) --> C2a;
-                    ba("->branch<-") --> C2a;
-
-                    comment(C3 is unreachable!) -.-> C3a
-
-                    class comment dashed
-                end
-
-                subgraph commit
-                    C1c((C1));
-                    C2c((C2)) --> C1c;
-                    C3c(("->C3<-")) --> C2c;
-                    bc(branch) --> C2c;
-                end
-
-                subgraph move_up
-                    C1m((C1));
-                    C2m(("->C2<-")) --> C1m;
-                    bm(branch) --> C2m;
-                end
-
-                subgraph initial
-                    C1b((C1));
-                    C2b((C2)) --> C1b;
-                    bb("->branch<-") --> C2b;
-                end
-            ```
-
-    2. `git revert`
-        - Undo changes made by *one* commit
-        - Create a new commit that undoes the commit's change
-
-    3. `git reset`
-        - Reset working tree/stage/commit tree to earlier state
-            - May include delete!
-        - Much more powerful & dangerous than `checkout`
-        - `git reset reset_mode commit_reset_to`
-        - Commit to reset to: default `HEAD`
-        - 3 reset modes
-
-            |             | `--soft`         | `--mixed` (default) | `--hard`      |
-            | :---------- | :--------------- | :------------------ | :------------ |
-            | Working dir | Keep change      | Same as left        | Delete change |
-            | Stage area  | Stage change     | Not stage change    | Same as left  |
-            | Commit tree | Remove to commit | Same as left        | Same as left  |
-
-            ![Modes of git reset](pics/git_reset_modes.svg)
-
-    4. `git reset` vs `git checkout`
-        Key takeaway:
-        - `git checkout`: Change **working tree**
-        - `git revert`: Undo one commit
-        - `git reset`: Reset **stage**
-
-## Git merge
+## 3. Git merge
 
 - Q: Branched. Wat do?
 - A: Merge!
 
 ![Thanh's first merge](pics/thanh_1st_merge.jpg)
 
-1. Basic merging: 2 methods
+### 1. Basic merging: 2 methods
 
-    1. Merge
-        Incoporate changes directly
+#### 1. Merge
 
-        ```bash
-        # Merge fix into master
-        git checkout master
-        git merge fix
-        # look ma no conflict
-        ```
+Incorporate changes directly
 
-        ```mermaid
-        graph BT
-            classDef master fill:#418a44;
-            classDef fix fill:#484A4B;
+```bash
+# Merge fix into master
+git checkout master
+git merge fix
+# look ma no conflict
+```
 
-            subgraph after
-                C1a((C1)) --> C0a((C0));
-                C2a((C2)) --> C1a;
-                C3a((C3)) --> C1a;
+```mermaid
+graph BT
+    classDef master fill:#418a44;
+    classDef fix fill:#484A4B;
 
-                C4a((C4)) --> C3a;
-                C4a --> C2a;
+    subgraph after
+        C1a((C1)) --> C0a((C0));
+        C2a((C2)) --> C1a;
+        C3a((C3)) --> C1a;
 
-                ma("->master<-") --> C4a;
-                fa(fix) --> C3a;
+        C4a((C4)) --> C3a;
+        C4a --> C2a;
 
-                class ma master;
-                class fa fix;
-            end
+        ma("->master<-") --> C4a;
+        fa(fix) --> C3a;
 
-            subgraph before
-                C1b((C1)) --> C0b((C0));
-                C2b((C2)) --> C1b;
-                C3b((C3)) --> C1b;
+        class ma master;
+        class fa fix;
+    end
 
-                mb("->master<-") --> C2b;
-                fb(fix) --> C3b;
+    subgraph before
+        C1b((C1)) --> C0b((C0));
+        C2b((C2)) --> C1b;
+        C3b((C3)) --> C1b;
 
-                class mb master
-                class fb fix
-            end
-        ```
+        mb("->master<-") --> C2b;
+        fb(fix) --> C3b;
 
-    2. Rebase
-        - Copy the history from the branch point to another point
-        - Note: The Golden Rule of Rebasing
-          - Do **NOT** rebase on **PUBLIC** branch
+        class mb master
+        class fb fix
+    end
+```
 
-        ```bash
-        # Rebase fix on top of master
-        git checkout fix
-        git rebase master
-        ```
+#### 2. Rebase
 
-        ```mermaid
-        graph BT
-            classDef dashed stroke-dasharray: 5, 5;
-            classDef master fill:#418a44;
-            classDef fix fill:#484A4B;
+- Copy the history from the branch point to another point
+- Note: The *Golden Rule of Rebasing*
+  - Do **NOT** rebase on **`PUBLIC`** branch
 
-            subgraph after
-                C1a((C1)) --> C0a((C0));
-                C2a((C2)) --> C1a;
-                C3a((C3)) -.-> C1a;
-                C4a((C4)) -.-> C3a;
+```bash
+# Rebase fix on top of master
+git checkout fix
+git rebase master
+```
 
-                C3a_((C3')) --> C2a;
-                C4a_((C4')) --> C3a_;
+```mermaid
+graph BT
+    classDef dashed stroke-dasharray: 5, 5;
+    classDef master fill:#418a44;
+    classDef fix fill:#484A4B;
 
-                ma(master) --> C2a;
-                fa("->fix<-") --> C4a_;
+    subgraph after
+        C1a((C1)) --> C0a((C0));
+        C2a((C2)) --> C1a;
+        C3a((C3)) -.-> C1a;
+        C4a((C4)) -.-> C3a;
 
-                class C3a dashed;
-                class C4a dashed;
-                class ma master;
-                class fa fix;
-            end
+        C3a_((C3')) --> C2a;
+        C4a_((C4')) --> C3a_;
 
-            subgraph before
-                C1b((C1)) --> C0b((C0))
-                C2b((C2)) --> C1b
-                C3b((C3)) --> C1b
-                C4b((C4)) --> C3b
+        ma(master) --> C2a;
+        fa("->fix<-") --> C4a_;
 
-                mb(master) --> C2b
-                fb("->fix<-") --> C4b
+        class C3a dashed;
+        class C4a dashed;
+        class ma master;
+        class fa fix;
+    end
 
-                class mb master;
-                class fb fix;
-            end
-        ```
+    subgraph before
+        C1b((C1)) --> C0b((C0))
+        C2b((C2)) --> C1b
+        C3b((C3)) --> C1b
+        C4b((C4)) --> C3b
 
-    3. Merge vs Rebase
-        - Difference:
-            - Merge: preserve history
-            - Rebase: rewrite history (replay)
-        - Conflict is inevitable. Resolving is down to us.
+        mb(master) --> C2b
+        fb("->fix<-") --> C4b
 
-2. Move commit around & Rewrite history
-    1. Cherry-pick
+        class mb master;
+        class fb fix;
+    end
+```
 
-        Manually copy commits then add it over `HEAD`
+#### 3. Merge vs Rebase
 
-        ```bash
-        git cherry-pick commit_1 commit_2 ...
-        ```
+- Difference:
+  - Merge: preserve history
+  - Rebase: rewrite history (replay)
+- Conflict is inevitable. Resolving is down to us.
 
-    2. Interactive rebase
-        - Cherry-pick disadvantage: need to know commit
-        - `rebase -i` comes to the rescue!
-        - Interactive rebase can do:
-            - Reorder commits
-            - Pick neccessary commits
-            - Squash commits
-            - Split commits
-        - The Golden Rule of Rebasing still applies:
-            - NO rebase on PUBLIC
-            - Use rebase to cleanup before push
-        - Why no interactive merge?
-            - Merge doesn't meant to *rewrite history* like rebase
+### 2. Move commit around & Rewrite history
 
-        ```bash
-        git rebase -i HEAD~10
-        ```
+#### 1. Cherry-pick
 
-    3. Change latest commit
-        - `git reset HEAD~1`
-        - `git commit -m amend`: Remove latest commit, stage all change, ready to commit
+Manually copy commits then add it over `HEAD`
 
-## Git remote
+```bash
+git cherry-pick commit_1 commit_2 ...
+```
 
-### Common flow
+#### 2. Interactive rebase
+
+- Cherry-pick disadvantage: need to know commit
+- `rebase -i` comes to the rescue!
+- Interactive rebase can do:
+  - Reorder commits
+  - Pick necessary commits
+  - Squash commits
+  - Split commits
+  - Remove commits
+- The Golden Rule of Rebasing still applies:
+  - NO rebase on `PUBLIC`
+  - Use rebase to cleanup before push
+- Why no interactive merge?
+  - Merge doesn't meant to *rewrite history* like rebase
+
+```bash
+git rebase -i HEAD~10
+```
+
+#### 3. Change latest commit
+
+- `git reset HEAD~1`
+- `git commit -m amend`: Remove latest commit, stage all change, ready to commit
+
+## 4. Git remote
+
+### 1. Common flow
 
 ```bash
 # Get remote repo to local 1st time
@@ -462,36 +519,41 @@ git merge remote/branch    # Apply those changes
 git push remote branch
 ```
 
-### Refspec & Tracking
+### 2. Refspec & Tracking
 
-1. `origin/master` vs `origin master`???
-    - `origin/master`: refspec = branch
-        - A local copy of `master` on `origin`
-    - Why no `git pull origin/master`, or `git pull origin origin/master`?
-        - The distinction is valid on local only
+#### 1. `origin/master` vs `origin master`???
 
-2. `origin/master` and `master`???
-    - `master` **tracks** `origin/master`
-        - Pull: changes are automatically merged to `master`
-        - Push: changes are automatically merged to `origin/master`
-    - Manually specify tracking:
+- `origin/master`: refspec = branch
+  - A local copy of `master` on `origin`
+- Why no `git pull origin/master`, or `git pull origin origin/master`?
+  - The distinction is valid on local only
 
-        ```bash
-        git checkout -b notMaster origin/master
-        ```
+#### 2. `origin/master` and `master`???
 
-## Git Internal
+- `master` **tracks** `origin/master`
+  - Pull: changes are automatically merged to `master`
+  - Push: changes are automatically merged to `origin/master`
+- Manually specify tracking:
 
-1. How git stores data (or what a commit actually is)
-    - Git stores, and each commit is, snapshot
-        - Not diff -> main difference between Git vs others
-        - Hidden cause: distributed vs centralized
-    - Snapshot is large, how to minimize?
-        - Refer to unchanged file in previous snapshots
-        - Data-level diff
-        - Compress
+    ```bash
+    git checkout -b notMaster origin/master
+    ```
 
-2. Hashed tree? Distributed? Sound familiar...
-    Is git a blockchain???? No!
-    - Git allow history rewrite
-    - Git doesn't enforce verification (proof of work)
+## 5. Git Internal
+
+### 1. How git stores data (or what a commit actually is)
+
+- Git stores, and each commit is, snapshot
+  - Not diff -> main difference between Git vs others
+  - Hidden cause: distributed vs centralized
+- Snapshot is large, how to minimize?
+  - Refer to unchanged file in previous snapshots
+  - Data-level diff
+  - Compress
+
+### 2. Hashed tree? Distributed? Sound familiar...
+
+Is git a blockchain???? No!
+
+- Git allow history rewrite
+- Git doesn't enforce verification (proof of work)
