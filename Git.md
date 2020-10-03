@@ -329,7 +329,7 @@ graph BT
 #### 2. `git revert`
 
 - Undo changes made by *one* commit
-- Create a new commit that undoes the commit's change
+- Create a new commit that undoes the said commit's change
 
 #### 3. `git reset`
 
